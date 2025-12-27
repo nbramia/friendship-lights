@@ -1,0 +1,9 @@
+# Secrets - DO NOT COMMIT
+secrets.md
+worker/.dev.vars
+
+# Dependencies
+node_modules/
+
+# Build artifacts
+worker/.wrangler/

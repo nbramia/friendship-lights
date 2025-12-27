@@ -1,0 +1,8 @@
+name = "friendship-lights"
+main = "src/index.ts"
+compatibility_date = "2024-12-23"
+
+# KV namespace for rate limiting (bind after creating via dashboard or CLI)
+# [[kv_namespaces]]
+# binding = "RATE_LIMIT"
+# id = "<your-kv-namespace-id>"
