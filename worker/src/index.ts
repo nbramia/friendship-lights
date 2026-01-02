@@ -36,6 +36,7 @@ const COLORS = {
 // Token permissions: which tokens can perform which actions
 interface TokenPermissions {
   plug_on?: DeviceName[];
+  plug_off?: DeviceName[];
   daughter_signal?: Color[];
   all_off?: boolean;
 }
@@ -47,7 +48,7 @@ function getTokenPermissions(env: Env): Record<string, TokenPermissions> {
     [env.TOKEN_DAUGHTER]: { plug_on: ["grandparents_outlet"] },
     [env.TOKEN_MOM]: { daughter_signal: ["red"] },
     [env.TOKEN_DAD]: { daughter_signal: ["blue"] },
-    [env.TOKEN_ADMIN]: { all_off: true },
+    [env.TOKEN_ADMIN]: { all_off: true, plug_off: ["grandparents_outlet"] },
   };
 }
 
@@ -137,6 +138,19 @@ async function handlePlugOn(
   }
 
   const result = await turnOn(env, target as DeviceName);
+  return { ok: result.success, error: result.error };
+}
+
+// Action: plug_off - Turn off a specific outlet
+async function handlePlugOff(
+  env: Env,
+  target: string
+): Promise<{ ok: boolean; error?: string }> {
+  if (!(target in DEVICES)) {
+    return { ok: false, error: `Unknown target: ${target}` };
+  }
+
+  const result = await turnOff(env, target as DeviceName);
   return { ok: result.success, error: result.error };
 }
 
@@ -247,6 +261,19 @@ export default {
       }
 
       const result = await handlePlugOn(env, target);
+      return Response.json(result, { status: result.ok ? 200 : 500 });
+    }
+
+    if (action === "plug_off") {
+      if (!target) {
+        return Response.json({ ok: false, error: "Missing target field for plug_off" }, { status: 400 });
+      }
+
+      if (!tokenPerms.plug_off?.includes(target as DeviceName)) {
+        return Response.json({ ok: false, error: "Action not permitted for this token" }, { status: 403 });
+      }
+
+      const result = await handlePlugOff(env, target);
       return Response.json(result, { status: result.ok ? 200 : 500 });
     }
 

@@ -1,6 +1,6 @@
 # iOS Shortcuts Setup
 
-Create 6 shortcuts. Each one is identical except for the token and body.
+Create 7 shortcuts. Each one is identical except for the token and body.
 
 ---
 
@@ -101,6 +101,17 @@ https://friendship-lights.nbramia.workers.dev/signal
 | Key | Type | Value |
 |-----|------|-------|
 | action | Text | all_off |
+
+---
+
+### 7. Admin → Grandparents Off
+**Name:** Grandparents Off
+
+**Body:**
+| Key | Type | Value |
+|-----|------|-------|
+| action | Text | plug_off |
+| target | Text | grandparents_outlet |
 
 ---
 
