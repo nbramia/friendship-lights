@@ -51,10 +51,10 @@ https://friendship-lights.nbramia.workers.dev/signal
 
 ---
 
-### 2. Girlfriend → Nathan
+### 2. Partner → Nathan
 **Name:** Signal Nathan
 
-**Effect:** nathan_outlet ON, girlfriend_outlet OFF
+**Effect:** nathan_outlet ON, partner_outlet OFF
 
 **Body:**
 | Key | Type | Value |

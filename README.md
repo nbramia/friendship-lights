@@ -35,8 +35,8 @@ A "friendship light" IoT system that lets family members signal each other acros
 
 | Device | Location | SKU | Purpose |
 |--------|----------|-----|---------|
-| nathan_outlet | Nathan's place | H5086 | Receives signal from girlfriend |
-| girlfriend_outlet | Girlfriend's place | H5086 | Receives signal from Nathan |
+| nathan_outlet | Nathan's place | H5086 | Receives signal from partner |
+| partner_outlet | Partner's place | H5086 | Receives signal from Nathan |
 | grandparents_outlet | Grandparents' place | H5086 | Receives signal from daughter |
 | daughter_outlet | Daughter's place | H5086 | (unused in current config) |
 | daughter_bulb | Daughter's place | H6008 | Shows color signal (red=Mom, blue=Dad) |
@@ -46,14 +46,14 @@ All devices are registered to a single Govee account and controlled via the [Gov
 ## Actions
 
 ### `nathan_signal`
-Nathan signals his girlfriend. Turns ON girlfriend_outlet and turns OFF nathan_outlet.
+Nathan signals his partner. Turns ON partner_outlet and turns OFF nathan_outlet.
 
 ```json
 {"action": "nathan_signal"}
 ```
 
 ### `partner_signal`
-Girlfriend signals Nathan. Turns ON nathan_outlet and turns OFF girlfriend_outlet.
+Partner signals Nathan. Turns ON nathan_outlet and turns OFF partner_outlet.
 
 ```json
 {"action": "partner_signal"}
@@ -94,8 +94,8 @@ Each person has a unique token that restricts what actions they can perform:
 
 | Person | Action | Effect |
 |--------|--------|--------|
-| Nathan | `nathan_signal` | girlfriend_outlet ON, nathan_outlet OFF |
-| Girlfriend | `partner_signal` | nathan_outlet ON, girlfriend_outlet OFF |
+| Nathan | `nathan_signal` | partner_outlet ON, nathan_outlet OFF |
+| Partner | `partner_signal` | nathan_outlet ON, partner_outlet OFF |
 | Daughter | `daughter_signal` | grandparents_outlet ON, daughter_bulb OFF |
 | Mom | `grandparents_signal` (red) | daughter_bulb RED, grandparents_outlet OFF |
 | Dad | `grandparents_signal` (blue) | daughter_bulb BLUE, grandparents_outlet OFF |
@@ -224,7 +224,7 @@ The worker requires these secrets (set via `wrangler secret put <NAME>`):
 |----------|-------------|
 | `GOVEE_API_KEY` | Your Govee Developer API key |
 | `TOKEN_NATHAN` | Auth token for Nathan |
-| `TOKEN_GIRLFRIEND` | Auth token for Girlfriend |
+| `TOKEN_PARTNER` | Auth token for Partner |
 | `TOKEN_DAUGHTER` | Auth token for Daughter |
 | `TOKEN_MOM` | Auth token for Mom |
 | `TOKEN_DAD` | Auth token for Dad |
@@ -237,7 +237,7 @@ Create `worker/.dev.vars`:
 ```
 GOVEE_API_KEY=your-govee-api-key
 TOKEN_NATHAN=generated-token-1
-TOKEN_GIRLFRIEND=generated-token-2
+TOKEN_PARTNER=generated-token-2
 TOKEN_DAUGHTER=generated-token-3
 TOKEN_MOM=generated-token-4
 TOKEN_DAD=generated-token-5

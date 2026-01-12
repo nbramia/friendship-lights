@@ -8,7 +8,7 @@
 export interface Env {
   GOVEE_API_KEY: string;
   TOKEN_NATHAN: string;
-  TOKEN_GIRLFRIEND: string;
+  TOKEN_PARTNER: string;
   TOKEN_DAUGHTER: string;
   TOKEN_MOM: string;
   TOKEN_DAD: string;
@@ -18,7 +18,7 @@ export interface Env {
 // Device mapping - discovered via Govee API on 2024-12-23
 const DEVICES = {
   nathan_outlet: { sku: "H5086", device: "06:5E:5C:E7:53:3D:09:2E" },
-  girlfriend_outlet: { sku: "H5086", device: "06:BD:5C:E7:53:42:C1:AE" },
+  partner_outlet: { sku: "H5086", device: "06:BD:5C:E7:53:42:C1:AE" },
   grandparents_outlet: { sku: "H5086", device: "09:1F:5C:E7:53:60:A1:5E" },
   daughter_outlet: { sku: "H5086", device: "08:BF:5C:E7:53:3D:45:10" },
   daughter_bulb: { sku: "H6008", device: "2D:B8:98:17:3C:C6:09:A8" },
@@ -46,7 +46,7 @@ interface TokenPermissions {
 
 const ALL_OUTLETS: DeviceName[] = [
   "nathan_outlet",
-  "girlfriend_outlet",
+  "partner_outlet",
   "grandparents_outlet",
   "daughter_outlet",
   "daughter_bulb",
@@ -55,7 +55,7 @@ const ALL_OUTLETS: DeviceName[] = [
 function getTokenPermissions(env: Env): Record<string, TokenPermissions> {
   return {
     [env.TOKEN_NATHAN]: { nathan_signal: true, plug_off: ALL_OUTLETS },
-    [env.TOKEN_GIRLFRIEND]: { partner_signal: true, plug_off: ALL_OUTLETS },
+    [env.TOKEN_PARTNER]: { partner_signal: true, plug_off: ALL_OUTLETS },
     [env.TOKEN_DAUGHTER]: { daughter_signal: true, plug_off: ALL_OUTLETS },
     [env.TOKEN_MOM]: { grandparents_signal: ["red"], plug_off: ALL_OUTLETS },
     [env.TOKEN_DAD]: { grandparents_signal: ["blue"], plug_off: ALL_OUTLETS },
@@ -165,14 +165,14 @@ async function handlePlugOff(
   return { ok: result.success, error: result.error };
 }
 
-// Action: nathan_signal - Turn on girlfriend's outlet and turn off Nathan's
+// Action: nathan_signal - Turn on partner's outlet and turn off Nathan's
 async function handleNathanSignal(env: Env): Promise<{ ok: boolean; error?: string }> {
   const errors: string[] = [];
 
-  // Turn on girlfriend's outlet
-  const onResult = await turnOn(env, "girlfriend_outlet");
+  // Turn on partner's outlet
+  const onResult = await turnOn(env, "partner_outlet");
   if (!onResult.success) {
-    errors.push(`girlfriend_outlet on: ${onResult.error}`);
+    errors.push(`partner_outlet on: ${onResult.error}`);
   }
 
   // Turn off Nathan's outlet
@@ -188,7 +188,7 @@ async function handleNathanSignal(env: Env): Promise<{ ok: boolean; error?: stri
   return { ok: true };
 }
 
-// Action: partner_signal - Turn on Nathan's outlet and turn off girlfriend's
+// Action: partner_signal - Turn on Nathan's outlet and turn off partner's
 async function handlePartnerSignal(env: Env): Promise<{ ok: boolean; error?: string }> {
   const errors: string[] = [];
 
@@ -198,10 +198,10 @@ async function handlePartnerSignal(env: Env): Promise<{ ok: boolean; error?: str
     errors.push(`nathan_outlet on: ${onResult.error}`);
   }
 
-  // Turn off girlfriend's outlet
-  const offResult = await turnOff(env, "girlfriend_outlet");
+  // Turn off partner's outlet
+  const offResult = await turnOff(env, "partner_outlet");
   if (!offResult.success) {
-    errors.push(`girlfriend_outlet off: ${offResult.error}`);
+    errors.push(`partner_outlet off: ${offResult.error}`);
   }
 
   if (errors.length > 0) {
@@ -268,7 +268,7 @@ async function handleGrandparentsSignal(
 async function handleAllOff(env: Env): Promise<{ ok: boolean; error?: string }> {
   const devices: DeviceName[] = [
     "nathan_outlet",
-    "girlfriend_outlet",
+    "partner_outlet",
     "grandparents_outlet",
     "daughter_outlet",
     "daughter_bulb",
