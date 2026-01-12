@@ -44,14 +44,22 @@ interface TokenPermissions {
   all_off?: boolean;
 }
 
+const ALL_OUTLETS: DeviceName[] = [
+  "nathan_outlet",
+  "girlfriend_outlet",
+  "grandparents_outlet",
+  "daughter_outlet",
+  "daughter_bulb",
+];
+
 function getTokenPermissions(env: Env): Record<string, TokenPermissions> {
   return {
-    [env.TOKEN_NATHAN]: { nathan_signal: true },
-    [env.TOKEN_GIRLFRIEND]: { partner_signal: true },
-    [env.TOKEN_DAUGHTER]: { daughter_signal: true },
-    [env.TOKEN_MOM]: { grandparents_signal: ["red"] },
-    [env.TOKEN_DAD]: { grandparents_signal: ["blue"] },
-    [env.TOKEN_ADMIN]: { all_off: true, plug_off: ["grandparents_outlet"] },
+    [env.TOKEN_NATHAN]: { nathan_signal: true, plug_off: ALL_OUTLETS },
+    [env.TOKEN_GIRLFRIEND]: { partner_signal: true, plug_off: ALL_OUTLETS },
+    [env.TOKEN_DAUGHTER]: { daughter_signal: true, plug_off: ALL_OUTLETS },
+    [env.TOKEN_MOM]: { grandparents_signal: ["red"], plug_off: ALL_OUTLETS },
+    [env.TOKEN_DAD]: { grandparents_signal: ["blue"], plug_off: ALL_OUTLETS },
+    [env.TOKEN_ADMIN]: { all_off: true, plug_off: ALL_OUTLETS },
   };
 }
 
