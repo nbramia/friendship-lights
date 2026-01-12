@@ -33,9 +33,16 @@ iOS Shortcuts → POST /signal → Cloudflare Worker → Govee OpenAPI → Smart
 | daughter_outlet | H5086 | `08:BF:5C:E7:53:3D:45:10` | Socket |
 | daughter_bulb | H6008 | `2D:B8:98:17:3C:C6:09:A8` | Light |
 
-**Two action types:**
-1. `plug_on(target)` - Simple outlet ON
-2. `daughter_signal(color)` - Outlet ON → 10 second wait → Bulb ON with color (red/blue)
+**Actions (compound signals):**
+
+| Action | Effect |
+|--------|--------|
+| `nathan_signal` | girlfriend_outlet ON, nathan_outlet OFF |
+| `partner_signal` | nathan_outlet ON, girlfriend_outlet OFF |
+| `daughter_signal` | grandparents_outlet ON, daughter_bulb OFF |
+| `grandparents_signal` | daughter_bulb ON (red/blue), grandparents_outlet OFF |
+| `all_off` | All 5 devices OFF |
+| `plug_off` | Specific device OFF |
 
 ## Project Structure
 
@@ -73,7 +80,7 @@ npm run deploy
 curl -X POST http://localhost:8787/signal \
   -H "Authorization: Bearer <TOKEN>" \
   -H "Content-Type: application/json" \
-  -d '{"action": "plug_on", "target": "girlfriend_outlet"}'
+  -d '{"action": "nathan_signal"}'
 ```
 
 ## Govee API Reference
@@ -95,7 +102,6 @@ Header: Govee-API-Key: <key>
 
 ## Implementation Notes
 
-- The 10-second delay in `daughter_signal` uses `await new Promise(r => setTimeout(r, 10000))`. If Worker runtime limits interfere, use KV with scheduled follow-up.
 - Device SKUs and IDs are hardcoded in Worker config after initial discovery.
-- Rate limiting uses KV store (simple 1 req/sec per token).
-- Mom's token only allows `daughter_signal(red)`, Dad's only allows `daughter_signal(blue)`.
+- Each signal is a compound action (turns ON recipient device, turns OFF sender device).
+- Mom's token only allows `grandparents_signal(red)`, Dad's only allows `grandparents_signal(blue)`.

@@ -24,7 +24,8 @@ A "friendship light" IoT system that lets family members signal each other acros
 ## Features
 
 - **One-tap signaling** via iOS Shortcuts
-- **Per-person auth tokens** with action-level permissions (Mom can only trigger red, Dad can only trigger blue, etc.)
+- **Compound actions** - each signal turns ON the recipient's device and turns OFF the sender's
+- **Per-person auth tokens** with action-level permissions
 - **No API keys on devices** - Govee credentials stay server-side
 - **Works from anywhere** - No same-network requirement, no port forwarding
 - **No subscriptions** - Cloudflare Workers free tier is sufficient
@@ -37,30 +38,40 @@ A "friendship light" IoT system that lets family members signal each other acros
 | nathan_outlet | Nathan's place | H5086 | Receives signal from girlfriend |
 | girlfriend_outlet | Girlfriend's place | H5086 | Receives signal from Nathan |
 | grandparents_outlet | Grandparents' place | H5086 | Receives signal from daughter |
-| daughter_outlet | Daughter's place | H5086 | Receives signal from grandparents (immediate) |
-| daughter_bulb | Daughter's place | H6008 | Shows color after 10s delay (red=Mom, blue=Dad) |
+| daughter_outlet | Daughter's place | H5086 | (unused in current config) |
+| daughter_bulb | Daughter's place | H6008 | Shows color signal (red=Mom, blue=Dad) |
 
 All devices are registered to a single Govee account and controlled via the [Govee OpenAPI](https://developer.govee.com/).
 
 ## Actions
 
-### `plug_on`
-Turns on a single outlet. Used for simple bidirectional signaling.
+### `nathan_signal`
+Nathan signals his girlfriend. Turns ON girlfriend_outlet and turns OFF nathan_outlet.
 
 ```json
-{"action": "plug_on", "target": "girlfriend_outlet"}
+{"action": "nathan_signal"}
+```
+
+### `partner_signal`
+Girlfriend signals Nathan. Turns ON nathan_outlet and turns OFF girlfriend_outlet.
+
+```json
+{"action": "partner_signal"}
 ```
 
 ### `daughter_signal`
-A sequenced action for grandparent → daughter signaling:
-1. Turn ON `daughter_outlet` (immediate visual signal)
-2. Wait 10 seconds
-3. Turn ON `daughter_bulb` and set color (red or blue)
-
-This allows the daughter to see who signaled (Mom=red, Dad=blue) and acknowledge by turning off the outlet.
+Daughter signals grandparents. Turns ON grandparents_outlet and turns OFF daughter_bulb.
 
 ```json
-{"action": "daughter_signal", "color": "red"}
+{"action": "daughter_signal"}
+```
+
+### `grandparents_signal`
+Grandparent (Mom/Dad) signals daughter. Turns ON daughter_bulb with color and turns OFF grandparents_outlet.
+
+```json
+{"action": "grandparents_signal", "color": "red"}
+{"action": "grandparents_signal", "color": "blue"}
 ```
 
 ### `all_off`
@@ -70,18 +81,25 @@ Admin action to turn off all 5 devices at once.
 {"action": "all_off"}
 ```
 
+### `plug_off`
+Turn off a specific device.
+
+```json
+{"action": "plug_off", "target": "grandparents_outlet"}
+```
+
 ## Token Permissions
 
 Each person has a unique token that restricts what actions they can perform:
 
-| Person | Allowed Action |
-|--------|----------------|
-| Nathan | `plug_on` → girlfriend_outlet |
-| Girlfriend | `plug_on` → nathan_outlet |
-| Daughter | `plug_on` → grandparents_outlet |
-| Mom | `daughter_signal` → red |
-| Dad | `daughter_signal` → blue |
-| Admin | `all_off` |
+| Person | Action | Effect |
+|--------|--------|--------|
+| Nathan | `nathan_signal` | girlfriend_outlet ON, nathan_outlet OFF |
+| Girlfriend | `partner_signal` | nathan_outlet ON, girlfriend_outlet OFF |
+| Daughter | `daughter_signal` | grandparents_outlet ON, daughter_bulb OFF |
+| Mom | `grandparents_signal` (red) | daughter_bulb RED, grandparents_outlet OFF |
+| Dad | `grandparents_signal` (blue) | daughter_bulb BLUE, grandparents_outlet OFF |
+| Admin | `all_off`, `plug_off` | Turn off all or specific devices |
 
 Attempting an unauthorized action returns `403 Forbidden`.
 
@@ -104,9 +122,9 @@ POST https://friendship-lights.nbramia.workers.dev/signal
 
 ```json
 {
-  "action": "plug_on" | "daughter_signal" | "all_off",
-  "target": "<device_name>",  // for plug_on
-  "color": "red" | "blue"     // for daughter_signal
+  "action": "nathan_signal" | "partner_signal" | "daughter_signal" | "grandparents_signal" | "all_off" | "plug_off",
+  "target": "<device_name>",  // for plug_off only
+  "color": "red" | "blue"     // for grandparents_signal only
 }
 ```
 
@@ -181,7 +199,7 @@ The worker runs at `http://localhost:8787`.
 curl -X POST http://localhost:8787/signal \
   -H "Authorization: Bearer <your-token>" \
   -H "Content-Type: application/json" \
-  -d '{"action": "plug_on", "target": "girlfriend_outlet"}'
+  -d '{"action": "nathan_signal"}'
 ```
 
 ### Deployment
@@ -210,7 +228,7 @@ The worker requires these secrets (set via `wrangler secret put <NAME>`):
 | `TOKEN_DAUGHTER` | Auth token for Daughter |
 | `TOKEN_MOM` | Auth token for Mom |
 | `TOKEN_DAD` | Auth token for Dad |
-| `TOKEN_ADMIN` | Auth token for admin (all_off) |
+| `TOKEN_ADMIN` | Auth token for admin (all_off, plug_off) |
 
 ### Local Development Secrets
 
@@ -324,10 +342,6 @@ curl -X POST "https://openapi.api.govee.com/router/api/v1/device/control" \
 - Verify device is online in Govee Home app
 - Check device ID matches the worker config
 - Ensure Govee API key is valid
-
-### 10-second delay not working
-- Cloudflare Workers support up to 30 seconds CPU time
-- If issues persist, the delay could be implemented via KV + scheduled triggers
 
 ## Security Considerations
 

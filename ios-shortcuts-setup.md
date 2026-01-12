@@ -35,50 +35,55 @@ https://friendship-lights.nbramia.workers.dev/signal
 
 ---
 
-## The 6 Shortcuts
+## The 7 Shortcuts
 
 > **Note:** Get the actual tokens from `secrets.md` (not committed to git)
 
 ### 1. Nathan → Girlfriend
 **Name:** Signal Girlfriend
 
+**Effect:** girlfriend_outlet ON, nathan_outlet OFF
+
 **Body:**
 | Key | Type | Value |
 |-----|------|-------|
-| action | Text | plug_on |
-| target | Text | girlfriend_outlet |
+| action | Text | nathan_signal |
 
 ---
 
 ### 2. Girlfriend → Nathan
 **Name:** Signal Nathan
 
+**Effect:** nathan_outlet ON, girlfriend_outlet OFF
+
 **Body:**
 | Key | Type | Value |
 |-----|------|-------|
-| action | Text | plug_on |
-| target | Text | nathan_outlet |
+| action | Text | partner_signal |
 
 ---
 
 ### 3. Daughter → Grandparents
 **Name:** Signal Grandparents
 
+**Effect:** grandparents_outlet ON, daughter_bulb OFF
+
 **Body:**
 | Key | Type | Value |
 |-----|------|-------|
-| action | Text | plug_on |
-| target | Text | grandparents_outlet |
+| action | Text | daughter_signal |
 
 ---
 
 ### 4. Mom → Daughter (RED)
 **Name:** Signal Daughter
 
+**Effect:** daughter_bulb RED, grandparents_outlet OFF
+
 **Body:**
 | Key | Type | Value |
 |-----|------|-------|
-| action | Text | daughter_signal |
+| action | Text | grandparents_signal |
 | color | Text | red |
 
 ---
@@ -86,16 +91,20 @@ https://friendship-lights.nbramia.workers.dev/signal
 ### 5. Dad → Daughter (BLUE)
 **Name:** Signal Daughter
 
+**Effect:** daughter_bulb BLUE, grandparents_outlet OFF
+
 **Body:**
 | Key | Type | Value |
 |-----|------|-------|
-| action | Text | daughter_signal |
+| action | Text | grandparents_signal |
 | color | Text | blue |
 
 ---
 
 ### 6. Admin → All Off
 **Name:** All Lights Off
+
+**Effect:** All 5 devices OFF
 
 **Body:**
 | Key | Type | Value |
@@ -106,6 +115,8 @@ https://friendship-lights.nbramia.workers.dev/signal
 
 ### 7. Admin → Grandparents Off
 **Name:** Grandparents Off
+
+**Effect:** grandparents_outlet OFF only
 
 **Body:**
 | Key | Type | Value |
