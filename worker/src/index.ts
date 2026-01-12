@@ -37,17 +37,20 @@ const COLORS = {
 interface TokenPermissions {
   plug_on?: DeviceName[];
   plug_off?: DeviceName[];
-  daughter_signal?: Color[];
+  nathan_signal?: boolean;
+  partner_signal?: boolean;
+  daughter_signal?: boolean;
+  grandparents_signal?: Color[];
   all_off?: boolean;
 }
 
 function getTokenPermissions(env: Env): Record<string, TokenPermissions> {
   return {
-    [env.TOKEN_NATHAN]: { plug_on: ["girlfriend_outlet"] },
-    [env.TOKEN_GIRLFRIEND]: { plug_on: ["nathan_outlet"] },
-    [env.TOKEN_DAUGHTER]: { plug_on: ["grandparents_outlet"] },
-    [env.TOKEN_MOM]: { daughter_signal: ["red"] },
-    [env.TOKEN_DAD]: { daughter_signal: ["blue"] },
+    [env.TOKEN_NATHAN]: { nathan_signal: true },
+    [env.TOKEN_GIRLFRIEND]: { partner_signal: true },
+    [env.TOKEN_DAUGHTER]: { daughter_signal: true },
+    [env.TOKEN_MOM]: { grandparents_signal: ["red"] },
+    [env.TOKEN_DAD]: { grandparents_signal: ["blue"] },
     [env.TOKEN_ADMIN]: { all_off: true, plug_off: ["grandparents_outlet"] },
   };
 }
@@ -154,8 +157,77 @@ async function handlePlugOff(
   return { ok: result.success, error: result.error };
 }
 
-// Action: daughter_signal - Outlet ON, wait 10s, then bulb with color
-async function handleDaughterSignal(
+// Action: nathan_signal - Turn on girlfriend's outlet and turn off Nathan's
+async function handleNathanSignal(env: Env): Promise<{ ok: boolean; error?: string }> {
+  const errors: string[] = [];
+
+  // Turn on girlfriend's outlet
+  const onResult = await turnOn(env, "girlfriend_outlet");
+  if (!onResult.success) {
+    errors.push(`girlfriend_outlet on: ${onResult.error}`);
+  }
+
+  // Turn off Nathan's outlet
+  const offResult = await turnOff(env, "nathan_outlet");
+  if (!offResult.success) {
+    errors.push(`nathan_outlet off: ${offResult.error}`);
+  }
+
+  if (errors.length > 0) {
+    return { ok: false, error: errors.join("; ") };
+  }
+
+  return { ok: true };
+}
+
+// Action: partner_signal - Turn on Nathan's outlet and turn off girlfriend's
+async function handlePartnerSignal(env: Env): Promise<{ ok: boolean; error?: string }> {
+  const errors: string[] = [];
+
+  // Turn on Nathan's outlet
+  const onResult = await turnOn(env, "nathan_outlet");
+  if (!onResult.success) {
+    errors.push(`nathan_outlet on: ${onResult.error}`);
+  }
+
+  // Turn off girlfriend's outlet
+  const offResult = await turnOff(env, "girlfriend_outlet");
+  if (!offResult.success) {
+    errors.push(`girlfriend_outlet off: ${offResult.error}`);
+  }
+
+  if (errors.length > 0) {
+    return { ok: false, error: errors.join("; ") };
+  }
+
+  return { ok: true };
+}
+
+// Action: daughter_signal - Turn on grandparents' outlet and turn off daughter's bulb
+async function handleDaughterSignal(env: Env): Promise<{ ok: boolean; error?: string }> {
+  const errors: string[] = [];
+
+  // Turn on grandparents' outlet
+  const onResult = await turnOn(env, "grandparents_outlet");
+  if (!onResult.success) {
+    errors.push(`grandparents_outlet on: ${onResult.error}`);
+  }
+
+  // Turn off daughter's bulb
+  const offResult = await turnOff(env, "daughter_bulb");
+  if (!offResult.success) {
+    errors.push(`daughter_bulb off: ${offResult.error}`);
+  }
+
+  if (errors.length > 0) {
+    return { ok: false, error: errors.join("; ") };
+  }
+
+  return { ok: true };
+}
+
+// Action: grandparents_signal - Turn on daughter's bulb with color and turn off grandparents' outlet
+async function handleGrandparentsSignal(
   env: Env,
   color: string
 ): Promise<{ ok: boolean; error?: string }> {
@@ -163,19 +235,22 @@ async function handleDaughterSignal(
     return { ok: false, error: `Invalid color: ${color}. Must be 'red' or 'blue'.` };
   }
 
-  // Step 1: Turn on daughter's outlet
-  const outletResult = await turnOn(env, "daughter_outlet");
-  if (!outletResult.success) {
-    return { ok: false, error: `Failed to turn on outlet: ${outletResult.error}` };
-  }
+  const errors: string[] = [];
 
-  // Step 2: Wait 10 seconds
-  await new Promise((resolve) => setTimeout(resolve, 10000));
-
-  // Step 3: Turn on bulb and set color
+  // Turn on bulb and set color
   const bulbResult = await setBulbColor(env, color);
   if (!bulbResult.success) {
-    return { ok: false, error: `Failed to set bulb: ${bulbResult.error}` };
+    errors.push(`daughter_bulb on: ${bulbResult.error}`);
+  }
+
+  // Turn off grandparents' outlet
+  const offResult = await turnOff(env, "grandparents_outlet");
+  if (!offResult.success) {
+    errors.push(`grandparents_outlet off: ${offResult.error}`);
+  }
+
+  if (errors.length > 0) {
+    return { ok: false, error: errors.join("; ") };
   }
 
   return { ok: true };
@@ -277,16 +352,43 @@ export default {
       return Response.json(result, { status: result.ok ? 200 : 500 });
     }
 
-    if (action === "daughter_signal") {
-      if (!color) {
-        return Response.json({ ok: false, error: "Missing color field for daughter_signal" }, { status: 400 });
-      }
-
-      if (!tokenPerms.daughter_signal?.includes(color as Color)) {
+    if (action === "nathan_signal") {
+      if (!tokenPerms.nathan_signal) {
         return Response.json({ ok: false, error: "Action not permitted for this token" }, { status: 403 });
       }
 
-      const result = await handleDaughterSignal(env, color);
+      const result = await handleNathanSignal(env);
+      return Response.json(result, { status: result.ok ? 200 : 500 });
+    }
+
+    if (action === "partner_signal") {
+      if (!tokenPerms.partner_signal) {
+        return Response.json({ ok: false, error: "Action not permitted for this token" }, { status: 403 });
+      }
+
+      const result = await handlePartnerSignal(env);
+      return Response.json(result, { status: result.ok ? 200 : 500 });
+    }
+
+    if (action === "daughter_signal") {
+      if (!tokenPerms.daughter_signal) {
+        return Response.json({ ok: false, error: "Action not permitted for this token" }, { status: 403 });
+      }
+
+      const result = await handleDaughterSignal(env);
+      return Response.json(result, { status: result.ok ? 200 : 500 });
+    }
+
+    if (action === "grandparents_signal") {
+      if (!color) {
+        return Response.json({ ok: false, error: "Missing color field for grandparents_signal" }, { status: 400 });
+      }
+
+      if (!tokenPerms.grandparents_signal?.includes(color as Color)) {
+        return Response.json({ ok: false, error: "Action not permitted for this token" }, { status: 403 });
+      }
+
+      const result = await handleGrandparentsSignal(env, color);
       return Response.json(result, { status: result.ok ? 200 : 500 });
     }
 
